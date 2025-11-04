@@ -1,5 +1,15 @@
+# ============================================================
+#
+# Defines global project settings including random seed,
+# preferred device, training parameters, and output directories.
+# These parameters apply to all datasets and models unless
+# explicitly overridden in other configurations.
+# 
+# ============================================================
+
 seed: 42
-device_preference: mps  # mps | cuda | cpu
+device_preference: auto
+require_accelerator: false
 batch_size: 64
 epochs: 15
 lr: 0.001
