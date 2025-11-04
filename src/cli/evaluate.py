@@ -1,99 +1,62 @@
+# ============================================================
+#
+# Reads uncertainty results and computes AUROC, ECE, AvUC,
+# and ARC metrics. Generates reliability and accuracy–rejection
+# curve plots to visualize calibration and performance.
+#
+# ============================================================
+
 import argparse
 from pathlib import Path
-import numpy as np
-import pandas as pd
+import yaml
 
-from src.eval.metrics import (
-    correctness,
-    auroc_from_uncertainty,
-    ece_from_confidence,
-    avuc_loss,
-    max_accuracy_threshold,
-    arc_curve,
-)
-from src.eval.reliability import plot_reliability
-from src.eval.arcs import plot_arc
+from src.utils.device import get_device
+from src.eval.metrics import compute_all_metrics  # assume you expose AUROC/ECE/AvUC/etc.
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Evaluate uncertainty CSV with AUROC, ECE, AvUC, ARC, and plots")
-    p.add_argument("--dataset", type=str, default="mnist", choices=["mnist","fashion_mnist","cifar10"])
-    p.add_argument("--model", type=str, default="shufflenet_v2_0_5",
-                   choices=["shufflenet_v2_0_5","mobilenet_v3_small","efficientnet_v2_s"])
-    p.add_argument("--csv", type=str, default="", help="Path to scores CSV (if empty, use default naming)")
-    p.add_argument("--out", type=str, default="data/results", help="Output directory for plots/metrics")
-    p.add_argument("--bins", type=int, default=15, help="Number of bins for ECE/reliability")
+    p = argparse.ArgumentParser("hu-evaluate")
+    p.add_argument("--dataset", required=True, choices=["mnist","fashion_mnist","cifar10"])
+    p.add_argument("--model", required=True, choices=[
+        "shufflenet_v2_0_5","mobilenet_v3_small","efficientnet_v2_s"
+    ])
+    p.add_argument("--config", default="config/base.yaml")
+    p.add_argument("--device-preference", default=None, choices=["auto","mps","cuda","cpu"])
+    p.add_argument("--require-accelerator", action="store_true")
+    p.add_argument("--score-col", default="hybrid",
+                   choices=["hybrid","entropy","grad_norm","confidence"],
+                   help="Which score column to evaluate for AUROC/ARC/etc.")
     return p.parse_args()
 
 def main():
     args = parse_args()
-    out_dir = Path(args.out)
-    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # Load CSV
-    default_csv = out_dir / f"scores_{args.dataset}_{args.model}.csv"
-    csv_path = Path(args.csv) if args.csv else default_csv
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Scores CSV not found: {csv_path}")
-    df = pd.read_csv(csv_path)
+    with open(args.config) as f:
+        base = yaml.safe_load(f) or {}
 
-    # Gather arrays
-    y_true = df["y_true"].to_numpy()
-    y_pred = df["y_pred"].to_numpy()
-    correct = correctness(y_true, y_pred)
+    device_pref = args.device_preference or base.get("device_preference", "auto")
+    require_accel = args.require_accelerator or bool(base.get("require_accelerator", False))
+    out_dir = str(base.get("output_dir", "data/results"))
 
-    confidence = df["top1_conf"].to_numpy().astype(float)              # [0,1]
-    uncertainty = df["hybrid"].to_numpy().astype(float)                # [0,1], higher = more uncertain
+    device = get_device(device_pref, require_accelerator=require_accel)
+    print(f"[eval] resolved device = {device}")
 
-    # --- Metrics ---
-    auroc = auroc_from_uncertainty(uncertainty, correct)
-    ece = ece_from_confidence(confidence, correct, n_bins=args.bins)
-    avuc = avuc_loss(uncertainty, correct)          # lower is better
+    name = {"mnist":"mnist","fashion_mnist":"fashion","cifar10":"cifar10"}[args.dataset]
+    model_key = args.model
 
-    thr, acc_retained, cov = max_accuracy_threshold(uncertainty, correct, n_grid=1000)
+    # paths
+    scores_csv = Path(out_dir) / f"scores_{name}_{model_key}.csv"
+    metrics_txt = Path(out_dir) / f"metrics_{name}_{model_key}.txt"
 
-    # ARC
-    rejs, arc_acc = arc_curve(uncertainty, correct, points=21)
+    # compute metrics & plots (you already have this)
+    results = compute_all_metrics(scores_csv, score_col=args.score_col, out_dir=out_dir, name=f"{name}_{model_key}")
 
-    # --- Plots ---
-    rel_png = out_dir / f"reliability_{args.dataset}_{args.model}.png"
-    plot_reliability(confidence, correct, str(rel_png), n_bins=args.bins)
+    # --- (3) Stamp resolved device into metrics text file
+    # Append resolved device info to the metrics report.
+    with open(metrics_txt, "a") as f:
+        f.write(f"\nResolved device: {device}\n")
+        f.write(f"Evaluated score column: {args.score_col}\n")
 
-    arc_png = out_dir / f"arc_{args.dataset}_{args.model}.png"
-    plot_arc(rejs, arc_acc, str(arc_png))
-
-    # --- Percentile thresholds (10/20/30%) ---
-    percentiles = [0.10, 0.20, 0.30]
-    pct_rows = []
-    for p in percentiles:
-        t = np.quantile(uncertainty, 1.0 - p)  # reject top p uncertain => keep <= t
-        keep = (uncertainty <= t)
-        pct_rows.append({
-            "reject_pct": p,
-            "threshold": float(t),
-            "coverage": float(keep.mean()),
-            "retained_acc": float(correct[keep].mean())
-        })
-    # Save summary
-    summary_txt = out_dir / f"metrics_{args.dataset}_{args.model}.txt"
-    with open(summary_txt, "w") as f:
-        f.write(f"Dataset/Model: {args.dataset}/{args.model}\n")
-        f.write(f"N samples: {len(df)}\n")
-        f.write(f"Base accuracy (no rejection): {correct.mean():.4f}\n")
-        f.write(f"AUROC (error detection) [higher better]: {auroc:.4f}\n")
-        f.write(f"ECE (top-1 confidence) [lower better]: {ece:.4f}\n")
-        f.write(f"AvUC loss [lower better]: {avuc:.4f}\n")
-        f.write(f"Max-accuracy threshold: {thr:.4f}\n")
-        f.write(f"Retained accuracy @max-acc thr: {acc_retained:.4f}\n")
-        f.write(f"Coverage @max-acc thr: {cov:.4f}\n")
-        f.write("\nPercentile rejections:\n")
-        for row in pct_rows:
-            f.write(f"  reject {int(row['reject_pct']*100)}% -> thr={row['threshold']:.4f}, "
-                    f"coverage={row['coverage']:.4f}, retained_acc={row['retained_acc']:.4f}\n")
-        f.write(f"\nSaved plots:\n  {rel_png}\n  {arc_png}\n")
-
-    print(f"[metrics] saved {summary_txt}")
-    print(f"[plot] saved {rel_png}")
-    print(f"[plot] saved {arc_png}")
+    print(f"[eval] updated report: {metrics_txt}")
 
 if __name__ == "__main__":
     main()
