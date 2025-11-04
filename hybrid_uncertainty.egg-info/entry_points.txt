@@ -1,0 +1,4 @@
+[console_scripts]
+hu-evaluate = src.cli.evaluate:main
+hu-score = src.cli.score:main
+hu-train = src.cli.train:main

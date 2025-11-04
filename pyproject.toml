@@ -1,0 +1,14 @@
+[project]
+name = "hybrid-uncertainty"
+version = "0.1.0"
+description = "Hybrid entropy+gradient uncertainty evaluation for image classification"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools]
+packages = ["src"]
+
+[project.scripts]
+hu-train = "src.cli.train:main"
+hu-score = "src.cli.score:main"
+hu-evaluate = "src.cli.evaluate:main"

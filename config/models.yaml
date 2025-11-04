@@ -1,0 +1,8 @@
+mnist:
+  models: ["shufflenet_v2_0_5", "mobilenet_v3_small"]
+
+fashion_mnist:
+  models: ["shufflenet_v2_0_5", "mobilenet_v3_small"]
+
+cifar10:
+  models: ["mobilenet_v3_small", "efficientnet_v2_s"]

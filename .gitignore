@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+data/raw/
+data/results/
+data/processed/
+.DS_Store
+.vscode/

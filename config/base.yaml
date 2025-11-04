@@ -1,0 +1,6 @@
+seed: 42
+device_preference: mps  # mps | cuda | cpu
+batch_size: 64
+epochs: 15
+lr: 0.001
+output_dir: "data/results"
