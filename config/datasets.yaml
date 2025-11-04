@@ -1,3 +1,12 @@
+# ============================================================
+#
+# Specifies all datasets used for training and evaluation.
+# Includes dataset names, root directories, preprocessing
+# parameters, and data split ratios for reproducibility.
+# Supported datasets: MNIST, Fashion-MNIST, and CIFAR-10.
+#
+# ============================================================
+
 mnist:
   name: MNIST
   root: "data/raw"

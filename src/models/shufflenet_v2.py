@@ -1,3 +1,12 @@
+# ============================================================
+#
+# Defines the ShuffleNetV2 (0.5×) lightweight CNN architecture
+# used for efficiency-focused image classification experiments.
+# Adapted for grayscale inputs and configured for uncertainty
+# evaluation on MNIST and Fashion-MNIST datasets.
+#
+# ============================================================
+
 import torch.nn as nn
 import torchvision.models as tv
 

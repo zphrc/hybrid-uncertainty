@@ -1,3 +1,13 @@
+# ============================================================
+#
+# Defines preprocessing transformations applied to all datasets
+# prior to model training and evaluation. Includes tensor
+# conversion and normalization functions for both grayscale and
+# RGB image data to ensure consistency and stable convergence
+# across experiments.
+#
+# ============================================================
+
 from torchvision import transforms
 
 def get_transforms(grayscale: bool):

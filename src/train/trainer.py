@@ -1,3 +1,12 @@
+# ============================================================
+#
+# Implements the training loop for lightweight CNN models.
+# Handles forward and backward propagation, loss computation,
+# validation accuracy tracking, and checkpoint saving for use
+# in post-hoc uncertainty analysis.
+#
+# ============================================================
+
 from torch.utils.data import DataLoader
 import torch, torch.nn.functional as F
 from tqdm import tqdm

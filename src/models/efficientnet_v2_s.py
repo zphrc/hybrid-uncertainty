@@ -1,3 +1,12 @@
+# ============================================================
+#
+# Implements the EfficientNetV2-S lightweight CNN architecture,
+# emphasizing accuracy through compound scaling and progressive
+# learning. Used as the accuracy-oriented model for uncertainty
+# evaluation on CIFAR-10 experiments.
+#
+# ============================================================
+
 import torchvision.models as tv
 import torch.nn as nn
 

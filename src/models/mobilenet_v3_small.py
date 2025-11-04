@@ -1,3 +1,12 @@
+# ============================================================
+#
+# Implements the MobileNetV3-Small architecture optimized for
+# mobile and embedded deployment. Serves as a balanced model
+# combining accuracy and efficiency for uncertainty evaluation
+# across MNIST, Fashion-MNIST, and CIFAR-10 datasets.
+# 
+# ============================================================
+
 import torch.nn as nn
 import torchvision.models as tv
 

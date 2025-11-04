@@ -1,3 +1,13 @@
+# ============================================================
+#
+# Handles dataset loading, preprocessing, and train–validation
+# splitting for all supported image classification benchmarks.
+# Provides standardized access to MNIST, Fashion-MNIST, and
+# CIFAR-10 datasets with consistent transformations and splits
+# for reproducibility across experiments.
+#
+# ============================================================
+
 from torchvision import datasets
 from torch.utils.data import random_split
 

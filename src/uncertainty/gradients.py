@@ -1,8 +1,15 @@
+# ============================================================
+#
+# Calculates input gradient norms to estimate epistemic
+# uncertainty in trained models. Captures model sensitivity
+# to input perturbations and complements entropy-based metrics
+# in the hybrid uncertainty evaluation framework.
+#
+# ============================================================
+
 import torch
 
 @torch.no_grad()
-def _predict_logits(model, x):
-    return model(x)
 
 def grad_sensitivity(model, x, target_idx=None, use_logit=True):
     """

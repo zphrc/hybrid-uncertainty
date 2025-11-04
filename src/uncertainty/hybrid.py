@@ -1,3 +1,12 @@
+# ============================================================
+#
+# Combines normalized softmax entropy and gradient sensitivity
+# into a single hybrid danger score. Represents the integrated
+# measure of aleatoric and epistemic uncertainty for model
+# evaluation and threshold-based prediction rejection.
+#
+# ============================================================
+
 import torch
 from .normalize import normalize_entropy, normalize_linear
 

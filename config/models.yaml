@@ -1,3 +1,13 @@
+# ============================================================
+#
+# Lists lightweight CNN architectures used in the study and
+# their corresponding dataset pairings. This configuration
+# ensures consistent model selection across training and
+# evaluation scripts.
+# Supported models: ShuffleNetV2, MobileNetV3-Small, EfficientNetV2-S.
+#
+# ============================================================
+
 mnist:
   models: ["shufflenet_v2_0_5", "mobilenet_v3_small"]
 
